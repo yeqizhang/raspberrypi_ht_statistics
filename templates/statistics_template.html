@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>树莓派温湿度监控</title>
+
+    <!-- 引入 echarts.js -->
+    <script src="http://libs.baidu.com/jquery/1.7.2/jquery.min.js"></script>
+    <!-- 引入jquery.js -->
+    <script src="https://cdn.bootcss.com/echarts/4.1.0.rc2/echarts.min.js"></script>
+
+</head>
+
+<body style="text-align:center;">
+
+<div style="margin:0 auto">
+	<input type="radio" value="1" name="tRadio"  id="tRadio1"  checked="checked"/>一天内每10分钟
+	<input type="radio" value="2" name="tRadio" id="tRadio2"/>一天内每5分钟
+	<input type="radio" value="3" name="tRadio" id="tRadio3"/>近7天内
+	<input type="radio" value="4" name="tRadio" id="tRadio4"/>近30天
+</div>
+
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div id="mainT" style="width: 90%;height:500px;margin: 0 auto;"></div>
+
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div id="mainH" style="width: 90%;height:500px;margin: 10px auto;"></div>
+
+<script type="text/javascript">
+
+	 $(function(){
+		$(":radio").click(function(){
+			var checkValue = $(this).val();
+			if(1==checkValue){
+				getData(10,1440);
+			}
+			
+			if(2==checkValue){
+				getData(5,1440);
+			}
+			
+			if(3==checkValue){
+				getData(30,1440*7);
+			}
+			
+			if(4==checkValue){
+				getData(60,1440*30);
+			}
+			
+		});
+	});
+
+    var myChartT = echarts.init(document.getElementById('mainT'));
+    var myChartH = echarts.init(document.getElementById('mainH'));
+    
+    //缩放框工具
+    myChartT.dispatchAction({                
+		type: 'takeGlobalCursor',                
+		key: 'dataZoomSelect',               
+		 dataZoomSelectActive: true // activate or inactivate          
+	});
+	myChartH.dispatchAction({                
+		type: 'takeGlobalCursor',                
+		key: 'dataZoomSelect',               
+		 dataZoomSelectActive: true // activate or inactivate          
+	});
+
+    // 发送ajax请求，从后台获取json数据
+    $(document).ready(function () {
+       getData(10,1440);
+       //console.log(app.xTime);
+       //console.log(app.yTvalues);
+       //console.log(app.yHvalues)
+    });
+
+    function getData(range_args,time_args) {
+         $.ajax({
+            url:'/getData',
+            data:{range:range_args,time:time_args},	//range 每多少分钟取一个点， time：最近多少范围内的。
+            type:'POST',
+            async:false,
+            dataType:'json',
+            success:function(data) {
+				console.log(data);
+                //app.xTime = data.xTime;
+                //app.yTvalues = data.yTvalues;
+                //合成二维数组
+                var array1 = data.xTime;
+				var array2 = data.yTvalues;
+				var array3 = data.yHvalues;
+				var arrayAll=[];	//温度
+				var arrayAll2=[];	//湿度
+				for(var i=0;i<array1.length;i++){
+				    var time = parseInt(array1[i]*100000/100);
+					arrayAll.push([time,array2[i]]);
+					arrayAll2.push([time,array3[i]]);
+				}
+                myChartT.clear();
+				myChartH.clear();
+		myChartT.setOption({   
+                    title: {
+                        text: '温度图'
+                    },                        
+					xAxis: {
+						name:'时间',
+						type: 'time'
+						//data: data.xTime    time类型时，无需数据
+					},
+					yAxis: {
+						type: 'value',
+						axisLabel: {
+							formatter:'{value} ℃'
+						}
+					},          
+					//用于添加框选缩放功能
+					toolbox: {                   
+						show: true,                  
+						feature:{                     
+							dataZoom:{                        
+								realtime: false,                         
+								yAxisIndex: 'none',                      
+							},                    
+							restore: {},                   
+						}            
+					},               
+					dataZoom: 
+					[
+						{type: 'inside'},        //用于添加滚轮缩放
+						{type:'slider' },  //用于添加滑动条缩放，
+					],            
+					series: [{
+						name:"温度",
+						symbol:'none', //设置不显示数据的小圆点
+						smooth:true,
+						data: arrayAll,
+						type: 'line'
+					}],
+					tooltip : {
+						trigger: 'axis',
+						axisPointer: {
+						  type: 'cross'
+						},
+						formatter:function(parmas){
+                             //console.log(parmas[0].value[0] + "," + parmas[0].seriesName + "," + parmas[0].value[1]);
+                             return echarts.format.formatTime('MM-dd hh:mm', parmas[0].value[0])+ "<br>" + parmas[0].seriesName + " : " + parmas[0].value[1] + " ℃";
+                        }
+				    }
+				},true);
+				myChartH.setOption({   
+                    title: {
+                        text: '湿度图'
+                    },                        
+					xAxis: {
+						type: 'time'
+						//data: data.xTime    time类型时，无需数据
+					},
+					yAxis: {
+						type: 'value',
+						axisLabel: {
+							formatter:'{value} %'
+						}
+					},          
+					//用于添加框选缩放功能
+					toolbox: {                   
+						show: true,                  
+						feature:{                     
+							dataZoom:{                        
+								realtime: false,                         
+								yAxisIndex: 'none',                      
+							},                    
+							restore: {},                   
+						}            
+					},               
+					dataZoom: 
+					[
+						{type: 'inside'},        //用于添加滚轮缩放
+						{type:'slider' },  //用于添加滑动条缩放，
+					],            
+					series: [{
+						name:"湿度",
+						symbol:'none', //设置不显示数据的小圆点
+						smooth:true,
+						data: arrayAll2,
+						type: 'line'
+					}],
+					tooltip : {
+						trigger: 'axis',
+						axisPointer: {
+						  type: 'cross'
+						},
+						formatter:function(parmas){
+                             //console.log(parmas[0].value[0] + "," + parmas[0].seriesName + "," + parmas[0].value[1]);
+                             return echarts.format.formatTime('MM-dd hh:mm', parmas[0].value[0])+ "<br>" + parmas[0].seriesName + " : " + parmas[0].value[1] + " %";
+                        }
+				    }
+				},true);
+            },
+            error:function (msg) {
+                console.log(msg);
+                //alert('系统发生错误');
+            }
+        });
+
+    };
+
+</script>
+</body>
+</html>
