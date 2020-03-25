@@ -18,9 +18,9 @@ def get_data():
         time = request.form.get("time")
         range = request.form.get("range")
     else:
-        # time = request.args.get("time")
+        time = request.args.get("time")
+        range = request.args.get("range")
     return(get_jsondata(int(range),int(time)))
-	
 
 def conn_db(): 
     con = pymysql.connect(
@@ -49,10 +49,11 @@ def get_jsondata(range=1,n=20):
     yTvalues = []
     
     for data in u:
-		# xdays.append(str(data[0]))
+        # xdays.append(str(data[0]))
         # xTime.append(data[3].strftime('%Y-%m-%d %H:%M:%S'))
+
         # 直接返回时间戳
-        xTime.append(time.mktime(data[3].timetuple())) 
+        xTime.append(time.mktime(data[3].timetuple()))
         yHvalues.append(data[2])
         yTvalues.append(data[1])
       
