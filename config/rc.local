@@ -16,11 +16,9 @@ ntpdate ntp.aliyun.com &
 
 /etc/init.d/mysql start &
 
-sudo python /home/pi/myapps/shutdown/shutdown.py &
-
-sudo python3 /home/pi/myapps/py_ht_statistics/server.py &
+sudo python3 /home/pi/myapps/raspberrypi_ht_statistics/Server.py &
 
 sleep 10
-sudo python3 /home/pi/myapps/py_ht_statistics/ht.py &
+sudo python3 /home/pi/myapps/raspberrypi_ht_statistics/HtDataRecord.py &
 
 exit 0
