@@ -3,10 +3,10 @@
 <head>
     <meta charset="utf-8">
     <title>树莓派温湿度监控</title>
-
-    <!-- 引入 echarts.js -->
-    <script src="http://libs.baidu.com/jquery/1.7.2/jquery.min.js"></script>
+    
     <!-- 引入jquery.js -->
+    <script src="http://libs.baidu.com/jquery/1.7.2/jquery.min.js"></script>
+    <!-- 引入 echarts.js -->
     <script src="https://cdn.bootcss.com/echarts/4.1.0.rc2/echarts.min.js"></script>
 
 </head>
@@ -14,19 +14,58 @@
 <body style="text-align:center;">
 
 <div style="margin:0 auto">
-	<input type="radio" value="1" name="tRadio"  id="tRadio1"  checked="checked"/>一天内每10分钟
-	<input type="radio" value="2" name="tRadio" id="tRadio2"/>一天内每5分钟
+	<!-- <input type="radio" value="1" name="tRadio"  id="tRadio1"  checked="checked"/>一天内每10分钟 -->
+	<input type="radio" value="2" name="tRadio" id="tRadio2"  checked="checked"/>一天内每5分钟
 	<input type="radio" value="3" name="tRadio" id="tRadio3"/>近7天内
 	<input type="radio" value="4" name="tRadio" id="tRadio4"/>近30天
+	<input type="radio" value="5" name="tRadio" id="tRadio4"/>近180天
 </div>
 
-<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
-<div id="mainT" style="width: 90%;height:500px;margin: 0 auto;"></div>
 
-<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
-<div id="mainH" style="width: 90%;height:500px;margin: 10px auto;"></div>
+<div>
+    <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+    <div id="mainT" style="width: calc(100% - 150px);height:500px;margin: 0 auto;float: left;"></div>
+    <div style="float: right;width:150px;margin-top: 200px;">
+        <div style="height:30px;line-height: 30px;text-align: center;font-size:20px;">当前温度：</div>
+        <div id="now_temp" style="height:40px;line-height: 40px;text-align: center;font-size:25px;color:#0099FF;">- ℃</div>
+        <div id="now_time1" style="height:18px;line-height: 18px;text-align: center;font-size:10px;">----</div>
+    </div>
+</div>
+<div>
+    <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+    <div id="mainH" style="width: calc(100% - 150px);height:500px;margin: 10px auto;float: left;"></div>
+    <div style="float: right;width:150px;margin-top: 200px;">
+        <div style="height:30px;line-height: 30px;text-align: center;font-size:20px;">当前湿度：</div>
+        <div id="now_hum" style="height:40px;line-height: 40px;text-align: center;font-size:25px;color:#0099FF;">- %</div>
+        <div  id="now_time2" style="height:18px;line-height: 18px;text-align: center;font-size:10px;">----</div>
+    </div>
+</div>
 
 <script type="text/javascript">
+    // 对Date的扩展，将 Date 转化为指定格式的String
+    // 月(M)、日(d)、小时(h)、分(m)、秒(s)、季度(q) 可以用 1-2 个占位符， 
+    // 年(y)可以用 1-4 个占位符，毫秒(S)只能用 1 个占位符(是 1-3 位的数字) 
+    // 例子： 
+    // (new Date()).Format("yyyy-MM-dd hh:mm:ss.S") ==> 2006-07-02 08:09:04.423 
+    // (new Date()).Format("yyyy-M-d h:m:s.S")      ==> 2006-7-2 8:9:4.18 
+
+    Date.prototype.Format = function (fmt) { //author: meizz 
+
+       var o = {
+           "M+": this.getMonth() + 1, //月份 
+           "d+": this.getDate(), //日 
+           "h+": this.getHours(), //小时 
+           "m+": this.getMinutes(), //分 
+           "s+": this.getSeconds(), //秒 
+           "q+": Math.floor((this.getMonth() + 3) / 3), //季度 
+           "S": this.getMilliseconds() //毫秒 
+       };
+       if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+       for (var k in o)
+       if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+       return fmt;
+
+    }
 
 	 $(function(){
 		$(":radio").click(function(){
@@ -47,6 +86,9 @@
 				getData(60,1440*30);
 			}
 			
+			if(5==checkValue){
+				getData(60,1440*180);
+			}
 		});
 	});
 
@@ -65,20 +107,41 @@
 		 dataZoomSelectActive: true // activate or inactivate          
 	});
 
-    // 发送ajax请求，从后台获取json数据
+    
     $(document).ready(function () {
-       getData(10,1440);
+       setNowHT();  
+       getData(5,1440); // 发送ajax请求，从后台获取json数据
        //console.log(app.xTime);
        //console.log(app.yTvalues);
        //console.log(app.yHvalues)
+       var t2 = window.setInterval(function() {
+            setNowHT();
+       },20000)
+       //window.clearInterval(t2)  // 去除定时器
+
     });
+    
+    function setNowHT() {
+         $.ajax({
+            url:'/getNowHT',
+            type:'POST',
+            dataType:'json',
+            success:function(data) {
+                console.log(data);
+                 $("#now_temp").text(data.temperature + " ℃");
+                 $("#now_hum").text(data.humidity + " %");
+                 $("#now_time1").text(new Date().Format("yyyy-MM-dd hh:mm:ss"));
+                 $("#now_time2").text(new Date().Format("yyyy-MM-dd hh:mm:ss"));
+            }
+         });	
+	}			
 
     function getData(range_args,time_args) {
          $.ajax({
             url:'/getData',
             data:{range:range_args,time:time_args},	//range 每多少分钟取一个点， time：最近多少范围内的。
             type:'POST',
-            async:false,
+            //async:false,
             dataType:'json',
             success:function(data) {
 				console.log(data);
@@ -113,6 +176,7 @@
 						}
 					},          
 					//用于添加框选缩放功能
+					/*
 					toolbox: {                   
 						show: true,                  
 						feature:{                     
@@ -122,7 +186,7 @@
 							},                    
 							restore: {},                   
 						}            
-					},               
+					},   */            
 					dataZoom: 
 					[
 						{type: 'inside'},        //用于添加滚轮缩放
@@ -161,6 +225,7 @@
 						}
 					},          
 					//用于添加框选缩放功能
+					/*
 					toolbox: {                   
 						show: true,                  
 						feature:{                     
@@ -170,7 +235,7 @@
 							},                    
 							restore: {},                   
 						}            
-					},               
+					},       */          
 					dataZoom: 
 					[
 						{type: 'inside'},        //用于添加滚轮缩放

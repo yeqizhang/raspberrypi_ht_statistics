@@ -3,6 +3,7 @@ from flask import Flask,render_template, url_for
 import json
 from flask import request
 import time
+import Adafruit_DHT
 
 # 生成Flask实例
 app = Flask(__name__)
@@ -21,6 +22,22 @@ def get_data():
         time = request.args.get("time")
         range = request.args.get("range")
     return(get_jsondata(int(range),int(time)))
+
+# /getNowHT路由。 获取当前温湿度
+@app.route('/getNowHT',methods=["GET", "POST"])
+def get_now_ht():
+    sensor = Adafruit_DHT.DHT22
+    pin = 4 #GPIO4
+    humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
+    humidity = '{0:0.1f}'.format(humidity)
+    temperature = '{0:0.1f}'.format(temperature)
+    # 整理成json格式
+    jsonData = {}
+    jsonData['temperature'] = temperature
+    jsonData['humidity'] = humidity
+
+    result = json.dumps(jsonData)
+    return(result)
 
 def conn_db(): 
     con = pymysql.connect(
