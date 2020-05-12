@@ -21,6 +21,7 @@ def get_data():
     else:
         time = request.args.get("time")
         range = request.args.get("range")
+    # 因传入的参数需要转成int，这里无需担心sql注入的问题。
     return(get_jsondata(int(range),int(time)))
 
 # /getNowHT路由。 获取当前温湿度
