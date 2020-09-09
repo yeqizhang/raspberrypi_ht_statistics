@@ -45,7 +45,7 @@ frp内网穿透后的项目地址：[树莓派温湿度监控](http://www.yeqizh
 
 `python3 Server.py`
 
-在浏览器输入: *http://树莓派ip:5000* 统计图能够展示，则表示部署成功。
+在浏览器输入: *http://树莓派ip:5000/ht/* 统计图能够展示，则表示部署成功。
 
 ![](https://github.com/yeqizhang/raspberrypi_ht_statistics/raw/master/images/page.png)
 

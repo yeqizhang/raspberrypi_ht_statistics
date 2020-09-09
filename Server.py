@@ -8,12 +8,12 @@ import Adafruit_DHT
 # 生成Flask实例
 app = Flask(__name__)
 
-@app.route('/')
+@app.route('/ht/') # 为匹配nginx的转发，多加一个/
 def index():
     return render_template('statistics_template.html')
 
-# 接收前端的ajax请求
-@app.route('/getData',methods=["GET", "POST"])
+# /getData路由。 获取统计图是json数据
+@app.route('/ht/getData',methods=["GET", "POST"])
 def get_data():
     if request.method == "POST":
         time = request.form.get("time")
@@ -21,11 +21,10 @@ def get_data():
     else:
         time = request.args.get("time")
         range = request.args.get("range")
-    # 因传入的参数需要转成int，这里无需担心sql注入的问题。
     return(get_jsondata(int(range),int(time)))
 
 # /getNowHT路由。 获取当前温湿度
-@app.route('/getNowHT',methods=["GET", "POST"])
+@app.route('/ht/getNowHT',methods=["GET", "POST"])
 def get_now_ht():
     sensor = Adafruit_DHT.DHT22
     pin = 4 #GPIO4
@@ -44,12 +43,13 @@ def conn_db():
     con = pymysql.connect(
         host = 'localhost',
         port = 3306,
-        user = 'xxxxx',
-        password = 'xxxx',
-        db = 'your_database',
+        user = 'root',
+        password = 'iloveu521',
+        db = 'statistics',
         charset = 'utf8'
     )
     return con
+
 
 # 查询几分钟以内的数据，默认一小时之内的
 def get_jsondata(range=1,n=20):
@@ -67,15 +67,13 @@ def get_jsondata(range=1,n=20):
     yTvalues = []
     
     for data in u:
-        # xdays.append(str(data[0]))
+	# xdays.append(str(data[0]))
         # xTime.append(data[3].strftime('%Y-%m-%d %H:%M:%S'))
-
-        # 直接返回时间戳
         xTime.append(time.mktime(data[3].timetuple()))
         yHvalues.append(data[2])
         yTvalues.append(data[1])
       
-    jsonData['xTime'] = xTime
+    jsonData['xTime']=xTime
     jsonData['yHvalues'] = yHvalues
     jsonData['yTvalues'] = yTvalues
     
@@ -85,6 +83,7 @@ def get_jsondata(range=1,n=20):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0',port=5000)
+
 
 
 
