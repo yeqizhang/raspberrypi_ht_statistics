@@ -17,7 +17,7 @@
 
 <div style="margin:0 auto">
 	<!-- <input type="radio" value="1" name="tRadio"  id="tRadio1"  checked="checked"/>一天内每10分钟 -->
-	<input type="radio" value="2" name="tRadio" id="tRadio2"  checked="checked"/>一天内每5分钟
+	<input type="radio" value="2" name="tRadio" id="tRadio2"  checked="checked"/>24小时内每5分钟
 	<input type="radio" value="3" name="tRadio" id="tRadio3"/>近7天内
 	<input type="radio" value="4" name="tRadio" id="tRadio4"/>近30天
 	<input type="radio" value="5" name="tRadio" id="tRadio4"/>近180天
@@ -52,7 +52,6 @@
     // 例子： 
     // (new Date()).Format("yyyy-MM-dd hh:mm:ss.S") ==> 2006-07-02 08:09:04.423 
     // (new Date()).Format("yyyy-M-d h:m:s.S")      ==> 2006-7-2 8:9:4.18 
-
     Date.prototype.Format = function (fmt) { //author: meizz 
 
        var o = {
